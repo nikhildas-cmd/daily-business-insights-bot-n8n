@@ -1,0 +1,108 @@
+{
+  "name": "Daily Business Insights Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": [
+          {
+            "hour": 8,
+            "minute": 0
+          }
+        ]
+      },
+      "id": "1",
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "lookup",
+        "sheetId": "YOUR_GOOGLE_SHEET_ID",
+        "range": "Sheet1!A:D"
+      },
+      "id": "2",
+      "name": "Fetch Business Data",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 2,
+      "credentials": {
+        "googleApi": "YOUR_GOOGLE_SHEETS_CREDENTIAL"
+      },
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "operation": "chat",
+        "model": "gpt-3.5-turbo",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a concise business data summarizer. Summarize the input into a 2-3 sentence business insight, including key performance metrics and one suggestion for the day."
+          },
+          {
+            "role": "user",
+            "content": "Summarize this business data: {{$json}}"
+          }
+        ]
+      },
+      "id": "3",
+      "name": "AI Summary",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "credentials": {
+        "openAiApi": "YOUR_OPENAI_CREDENTIAL"
+      },
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "{{$json[\"choices\"][0][\"message\"][\"content\"]}}"
+      },
+      "id": "4",
+      "name": "Send to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "credentials": {
+        "telegramApi": "YOUR_TELEGRAM_CREDENTIAL"
+      },
+      "position": [960, 300]
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Business Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Business Data": {
+      "main": [
+        [
+          {
+            "node": "AI Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Summary": {
+      "main": [
+        [
+          {
+            "node": "Send to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
